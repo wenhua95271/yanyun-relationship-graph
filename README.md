@@ -29,6 +29,13 @@
 
 ### 步骤
 
+0. **先拿到代码**
+   会 git 的直接 clone：
+   ```bash
+   git clone https://github.com/wenhua95271/yanyun-relationship-graph.git
+   ```
+   不会 git 的，点仓库页右上角 Code → Download ZIP，解压就是全部文件。下面的步骤都在仓库目录里操作。
+
 1. **建库建表**
    ```bash
    mysql -u root -p < schema.sql

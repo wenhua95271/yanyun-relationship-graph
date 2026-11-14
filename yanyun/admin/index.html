@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<title>燕云十六声关系图 · 管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101614; --paper:#171f1c; --paper2:#1d2823; --ink:#ece5d3; --ink2:#c6cbbd;
+    --muted:#8f9a92; --line:#33413a; --card:#1a2420;
+    --xiayuan:#f08aa3; --shitu:#6fc2bb; --jieyi:#e3b959; --accent:#e08a7a;
+    --danger:#e26d5a; --btn:#2f7d7a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Noto Sans SC",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.6;-webkit-text-size-adjust:100%}
+  a{color:var(--accent)}
+  .wrap{max-width:720px;margin:0 auto;padding:16px 14px 48px}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    padding:8px 2px 14px;border-bottom:1px solid var(--line)}
+  h1{font-size:20px;margin:0}
+  h2{font-size:17px;margin:26px 0 10px}
+  .sub{color:var(--muted);font-size:13px}
+  .counts{color:var(--muted);font-size:13px;margin:10px 2px 0}
+  input,select,textarea{width:100%;background:var(--paper2);color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;padding:13px 12px;font-size:16px;
+    font-family:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;
+    font-size:16px;padding:13px 18px;min-height:48px}
+  .btn-primary{background:var(--btn);color:#fff;width:100%}
+  .btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--line);
+    padding:10px 14px;min-height:44px;font-size:15px}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);
+    padding:10px 14px;min-height:44px;font-size:15px}
+  .btn-small{padding:9px 13px;min-height:42px;font-size:15px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;margin:10px 0}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 2px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .info{min-width:0;flex:1}
+  .row .name{font-weight:700;font-size:16px;word-break:break-all}
+  .row .meta{color:var(--muted);font-size:13px;word-break:break-all}
+  .row .ops{display:flex;gap:8px;flex-shrink:0}
+  .chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:20px;
+    border:1px solid currentColor;margin-left:6px;vertical-align:middle}
+  .c-xiayuan{color:var(--xiayuan)} .c-shitu{color:var(--shitu)} .c-jieyi{color:var(--jieyi)}
+  .rel-line{font-size:16px;word-break:break-all}
+  .rel-line .arr{color:var(--muted);margin:0 4px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+  .pill{border:1px solid var(--line);background:transparent;color:var(--ink2);
+    border-radius:20px;padding:9px 16px;min-height:42px;font-size:15px}
+  .pill.on{background:var(--paper2);color:var(--ink);border-color:var(--accent)}
+  .toast{display:none;background:#3a232c;color:#f6c9d2;border:1px solid var(--xiayuan);
+    border-radius:10px;padding:12px 18px;margin:0;font-size:15px;position:fixed;
+    left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:90vw;
+    box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  .toast.show{display:block}
+  .ok-msg{display:none;background:#1c3331;color:#a8d8d3;border:1px solid var(--shitu);
+    border-radius:10px;padding:12px 18px;margin:0;font-size:15px;position:fixed;
+    left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:90vw;
+    box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  .ok-msg.show{display:block}
+  .empty{color:var(--muted);text-align:center;padding:18px 0}
+  .edit-form{margin-top:10px}
+  .edit-form .row-btns{display:flex;gap:10px;margin-top:12px}
+  .edit-form .row-btns button{flex:1}
+  /* 密码遮罩 */
+  #gate{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;
+    align-items:center;justify-content:center;padding:20px;z-index:50}
+  #gate.hidden{display:none}
+  #gate .card{width:100%;max-width:380px}
+  #gate h2{margin-top:0}
+  #gateErr{display:none;color:var(--danger);font-size:14px;margin-top:10px}
+  #gateErr.show{display:block}
+  .top-link{font-size:14px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>燕云关系图 · 管理</h1>
+    <a class="top-link" href="/yanyun/">← 回主页面</a>
+  </header>
+  <div class="counts" id="counts"></div>
+  <div class="toast" id="toast"></div>
+  <div class="ok-msg" id="okmsg"></div>
+
+  <h2>新增人物</h2>
+  <div class="card">
+    <label for="newName">名字 *</label>
+    <input id="newName" placeholder="例如：温华" autocomplete="off" />
+    <label for="newAvatar">头像（可选）</label>
+    <input id="newAvatar" type="file" accept="image/*" />
+    <div id="newAvatarPreview" style="margin-top:8px"></div>
+    <label for="newRelPerson">关系（可选）</label>
+    <select id="newRelPerson"></select>
+    <label for="newRelType">关系类型</label>
+    <select id="newRelType">
+      <option value="xiayuan">侠缘</option>
+      <option value="jieyi">结义</option>
+      <option value="shitu_new_master">师徒（新人是师傅）</option>
+      <option value="shitu_new_disciple">师徒（新人是徒弟）</option>
+    </select>
+    <div style="margin-top:14px"><button class="btn-primary" id="addPersonBtn">新增人物</button></div>
+  </div>
+
+  <h2>人物</h2>
+  <input id="search" type="search" placeholder="搜索名字…" autocomplete="off" />
+  <div class="card" id="peopleList"></div>
+</div>
+
+<div id="cropper" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:60;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:340px">
+    <h2 style="margin-top:0">调整头像</h2>
+    <div class="sub">拖动图片选择区域，下方滑杆放大缩小，圆框里的就是最终效果。</div>
+    <div id="cropBox" style="position:relative;width:260px;height:260px;margin:14px auto;overflow:hidden;border-radius:50%;background:#000;touch-action:none;cursor:grab">
+      <img id="cropImg" style="position:absolute;left:0;top:0;max-width:none;user-select:none;-webkit-user-drag:none" draggable="false" alt="" />
+    </div>
+    <label>缩放</label>
+    <input id="cropZoom" type="range" min="100" max="300" value="100" style="width:100%" />
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn-primary" id="cropOk" style="flex:1">确认</button>
+      <button class="btn-ghost" id="cropCancel" style="flex:1">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="gate">
+  <div class="card">
+    <h2>请输入管理密码</h2>
+    <div class="sub">密码只存在本机浏览器里（sessionStorage），关掉标签页就清除。</div>
+    <label for="pwd">密码</label>
+    <input id="pwd" type="password" placeholder="管理密码" autocomplete="off" />
+    <div id="gateErr">密码错误，请重新输入。</div>
+    <div style="margin-top:14px"><button class="btn-primary" id="gateBtn">进入管理</button></div>
+  </div>
+</div>
+
+<script>
+const API = '/yanyun/api';
+const TYPE_NAME = {xiayuan:'侠缘', shitu:'师徒', jieyi:'结义'};
+let token = sessionStorage.getItem('yanyun_admin_token') || '';
+let people = [];
+let rels = [];
+let editingId = null;
+
+const $ = (id) => document.getElementById(id);
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- 头像裁剪器：拖动选区域，滑杆放大缩小 ---------- */
+const CROP_SIZE = 260;
+let cropState = null; // {img, baseScale, scale, x, y, onDone}
+function openCropper(file, onDone){
+  if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = function(){
+    const baseScale = Math.max(CROP_SIZE / img.width, CROP_SIZE / img.height);
+    cropState = {
+      img, baseScale, scale: baseScale,
+      x: (CROP_SIZE - img.width * baseScale) / 2,
+      y: (CROP_SIZE - img.height * baseScale) / 2,
+      onDone, url,
+    };
+    const el = $('cropImg');
+    el.onload = function(){ URL.revokeObjectURL(url); };
+    el.src = url;
+    $('cropZoom').value = 100;
+    applyCropTransform();
+    $('cropper').style.display = 'flex';
+  };
+  img.onerror = function(){ URL.revokeObjectURL(url); showToast('这张图片打不开'); };
+  img.src = url;
+}
+function clampCrop(){
+  const s = cropState;
+  const w = s.img.width * s.scale, h = s.img.height * s.scale;
+  s.x = Math.min(0, Math.max(CROP_SIZE - w, s.x));
+  s.y = Math.min(0, Math.max(CROP_SIZE - h, s.y));
+}
+function applyCropTransform(){
+  const s = cropState;
+  if (!s) return;
+  clampCrop();
+  const el = $('cropImg');
+  el.style.width = (s.img.width * s.scale) + 'px';
+  el.style.height = (s.img.height * s.scale) + 'px';
+  el.style.left = s.x + 'px';
+  el.style.top = s.y + 'px';
+}
+function closeCropper(){
+  $('cropper').style.display = 'none';
+  cropState = null;
+}
+function confirmCrop(){
+  const s = cropState;
+  if (!s) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = 200; canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+  const sx = -s.x / s.scale, sy = -s.y / s.scale;
+  const sw = CROP_SIZE / s.scale, sh = CROP_SIZE / s.scale;
+  ctx.drawImage(s.img, sx, sy, sw, sh, 0, 0, 200, 200);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  const cb = s.onDone;
+  closeCropper();
+  if (cb) cb(dataUrl);
+}
+$('cropZoom').addEventListener('input', function(){
+  if (!cropState) return;
+  cropState.scale = cropState.baseScale * (parseInt(this.value, 10) / 100);
+  applyCropTransform();
+});
+(function(){
+  const box = $('cropBox');
+  let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
+  box.addEventListener('pointerdown', function(e){
+    if (!cropState) return;
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    origX = cropState.x; origY = cropState.y;
+    box.style.cursor = 'grabbing';
+    box.setPointerCapture(e.pointerId);
+  });
+  box.addEventListener('pointermove', function(e){
+    if (!dragging || !cropState) return;
+    cropState.x = origX + (e.clientX - startX);
+    cropState.y = origY + (e.clientY - startY);
+    applyCropTransform();
+  });
+  function endDrag(e){
+    dragging = false;
+    box.style.cursor = 'grab';
+  }
+  box.addEventListener('pointerup', endDrag);
+  box.addEventListener('pointercancel', endDrag);
+})();
+$('cropOk').addEventListener('click', confirmCrop);
+$('cropCancel').addEventListener('click', closeCropper);
+
+let newAvatarDataUrl = '';
+
+function showToast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'), 4000); }
+function showOk(msg){ const t=$('okmsg'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(showOk._t); showOk._t=setTimeout(()=>t.classList.remove('show'), 3500); }
+
+async function api(method, path, body){
+  const headers = {'Content-Type':'application/json'};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  let resp;
+  try {
+    resp = await fetch(API + path, {method, headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store'});
+  } catch(e) {
+    throw new Error('网络请求失败：' + e.message);
+  }
+  let data = {};
+  try { data = await resp.json(); } catch(e) {}
+  if (resp.status === 401) { needPassword(true); throw new Error('密码错误'); }
+  if (!resp.ok) throw new Error(data.error || ('请求失败（' + resp.status + '）'));
+  return data;
+}
+
+function needPassword(wrong){
+  $('gate').classList.remove('hidden');
+  $('gateErr').classList.toggle('show', !!wrong);
+  if (wrong) { token=''; sessionStorage.removeItem('yanyun_admin_token'); }
+  setTimeout(()=>$('pwd').focus(), 50);
+}
+
+async function loadData(){
+  const data = await api('GET', '/data?v=' + Date.now());
+  people = data.people || [];
+  rels = data.relationships || [];
+  render();
+}
+
+function nameOf(id){
+  const p = people.find((x) => String(x.id) === String(id));
+  return p ? p.name : ('#' + id);
+}
+
+function render(){
+  $('counts').textContent = '共 ' + people.length + ' 人，' + rels.length + ' 条关系';
+  renderPeople();
+  fillRelSelects();
+}
+
+function relsOf(pid){
+  return rels.filter((r) => String(r.from_id) === String(pid) || String(r.to_id) === String(pid));
+}
+
+function otherOf(r, pid){
+  return String(r.from_id) === String(pid) ? r.to_id : r.from_id;
+}
+
+/* 编辑面板里每条关系的类型下拉：侠缘 / 结义 / 师徒（我是师傅） / 师徒（我是徒弟） */
+function typeOptionsFor(r, pid){
+  const isMaster = String(r.from_id) === String(pid);
+  const cur = r.type === 'shitu'
+    ? (isMaster ? 'shitu_master' : 'shitu_disciple')
+    : r.type;
+  const opts = [
+    ['xiayuan', '侠缘'],
+    ['jieyi', '结义'],
+    ['shitu_master', '师徒（我是师傅）'],
+    ['shitu_disciple', '师徒（我是徒弟）'],
+  ];
+  return opts.map(([v, label]) =>
+    '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>').join('');
+}
+
+function renderPeople(){
+  const q = ($('search').value || '').trim();
+  const list = people.filter((p) => !q || p.name.indexOf(q) !== -1);
+  const box = $('peopleList');
+  if (!list.length) { box.innerHTML = '<div class="empty">没有找到人</div>'; return; }
+  box.innerHTML = list.map((p) => {
+    if (editingId === p.id) {
+      const myRels = relsOf(p.id);
+      const relRows = myRels.length ? myRels.map((r) => {
+        const other = nameOf(otherOf(r, p.id));
+        const dir = r.type === 'shitu'
+          ? (String(r.from_id) === String(p.id) ? '→ ' + esc(other) + '（徒弟）' : esc(other) + '（师傅）→ 我')
+          : esc(other);
+        return '<div class="row"><div class="info"><div class="rel-line">' + dir + '</div>'
+          + '<select data-rel="' + r.id + '" data-pid="' + p.id + '" onchange="changeRelType(this)" style="margin-top:8px">'
+          + typeOptionsFor(r, p.id) + '</select></div>'
+          + '<div class="ops"><button class="btn-danger btn-small" onclick="delRel(' + r.id + ')">删除</button></div></div>';
+      }).join('') : '<div class="empty">还没有关系</div>';
+      const others = people.filter((x) => String(x.id) !== String(p.id));
+      const otherOpts = others.map((x) =>
+        '<option value="' + x.id + '">' + esc(x.name) + '</option>').join('');
+      return '<div class="row"><div class="info edit-form" style="width:100%">'
+        + '<label>名字 *</label><input id="editName" value="' + esc(p.name) + '">'
+        + '<label>身份 / 角色</label><input id="editRole" value="' + esc(p.role || '') + '">'
+        + '<label>简介</label><textarea id="editBio" rows="2">' + esc(p.bio || '') + '</textarea>'
+        + '<div class="row-btns"><button class="btn-primary" onclick="saveEdit(' + p.id + ')">保存</button>'
+        + '<button class="btn-ghost" onclick="cancelEdit()">取消</button></div>'
+        + '<h3 style="font-size:15px;margin:18px 0 4px">头像</h3>'
+        + (p.avatar
+          ? '<div style="display:flex;align-items:center;gap:12px;margin:6px 0"><img src="/yanyun/avatars/' + esc(p.avatar) + '?v=' + Date.now() + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover" alt="头像" /><button class="btn-danger btn-small" onclick="delAvatar(' + p.id + ')">删除头像</button></div>'
+          : '<div class="sub" style="margin:6px 0">还没有头像</div>')
+        + '<label for="editAvatarInput">换头像</label>'
+        + '<input id="editAvatarInput" type="file" accept="image/*" onchange="onEditAvatarFile(this, ' + p.id + ')" />'
+        + '<h3 style="font-size:15px;margin:18px 0 4px">TA 的关系（' + myRels.length + ' 条）</h3>'
+        + relRows
+        + '<label>加一条关系</label>'
+        + '<select id="editRelPerson">' + otherOpts + '</select>'
+        + '<select id="editRelType" style="margin-top:8px">'
+        + '<option value="xiayuan">侠缘</option>'
+        + '<option value="jieyi">结义</option>'
+        + '<option value="shitu_master">师徒（我是师傅）</option>'
+        + '<option value="shitu_disciple">师徒（我是徒弟）</option>'
+        + '</select>'
+        + '<div style="margin-top:10px"><button class="btn-primary" onclick="addRelForPerson(' + p.id + ')">加上这条关系</button></div>'
+        + '</div></div>';
+    }
+    const meta = [p.role, p.bio].filter(Boolean).map(esc).join(' · ');
+    const n = relsOf(p.id).length;
+    return '<div class="row"><div class="info"><div class="name">' + esc(p.name)
+      + (n ? '<span class="chip c-shitu">' + n + ' 条关系</span>' : '') + '</div>'
+      + (meta ? '<div class="meta">' + meta + '</div>' : '')
+      + '</div><div class="ops">'
+      + '<button class="btn-ghost btn-small" onclick="startEdit(' + p.id + ')">编辑</button>'
+      + '<button class="btn-danger btn-small" onclick="delPerson(' + p.id + ', \'' + esc(p.name).replace(/'/g, "\\'") + '\')">删除</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function startEdit(id){ editingId = id; renderPeople(); }
+function cancelEdit(){ editingId = null; renderPeople(); }
+
+async function saveEdit(id){
+  const name = $('editName').value.trim();
+  const role = $('editRole').value.trim();
+  const bio = $('editBio').value.trim();
+  if (!name) { showToast('名字不能为空'); return; }
+  try {
+    await api('PUT', '/people/' + id, {name, role, bio});
+    editingId = null;
+    await loadData();
+    showOk('已保存');
+  } catch(e) { showToast(e.message); }
+}
+
+async function delPerson(id, name){
+  if (!confirm('确定删除「' + name + '」吗？与 TA 有关的所有关系也会一起删掉。')) return;
+  try {
+    await api('DELETE', '/people/' + id);
+    await loadData();
+    showOk('已删除「' + name + '」');
+  } catch(e) { showToast(e.message); }
+}
+
+async function delRel(id){
+  if (!confirm('确定删除这条关系吗？')) return;
+  try {
+    await api('DELETE', '/relationships/' + id);
+    await loadData();
+    showOk('关系已删除');
+  } catch(e) { showToast(e.message); }
+}
+
+function onEditAvatarFile(input, pid){
+  const file = input.files && input.files[0];
+  if (!file) return;
+  openCropper(file, async function(dataUrl){
+    try {
+      await uploadAvatar(pid, dataUrl);
+      await loadData();
+      showOk('头像已更新');
+    } catch(e) { showToast(e.message); }
+  });
+  input.value = '';
+}
+
+async function delAvatar(pid){
+  if (!confirm('确定删除这个头像吗？')) return;
+  try {
+    await api('DELETE', '/people/' + pid + '/avatar');
+    await loadData();
+    showOk('头像已删除');
+  } catch(e) { showToast(e.message); }
+}
+
+async function uploadAvatar(pid, dataUrl){
+  await api('POST', '/people/' + pid + '/avatar', {image: dataUrl});
+}
+
+$('newAvatar').addEventListener('change', function(){
+  const file = this.files && this.files[0];
+  if (!file) return;
+  openCropper(file, function(dataUrl){
+    newAvatarDataUrl = dataUrl;
+    $('newAvatarPreview').innerHTML =
+      '<img src="' + dataUrl + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover" alt="头像预览" />';
+  });
+  this.value = '';
+});
+
+$('addPersonBtn').addEventListener('click', async () => {
+  const name = $('newName').value.trim();
+  if (!name) { showToast('请先填名字'); $('newName').focus(); return; }
+  const relPerson = $('newRelPerson').value;
+  const relType = $('newRelType').value;
+  try {
+    const res = await api('POST', '/people', {name, role: '', bio: ''});
+    const newId = res.id;
+    let relMsg = '';
+    if (relPerson && newId) {
+      const otherId = parseInt(relPerson, 10);
+      let from_id, to_id, type;
+      if (relType === 'shitu_new_master') { from_id = newId; to_id = otherId; type = 'shitu'; }
+      else if (relType === 'shitu_new_disciple') { from_id = otherId; to_id = newId; type = 'shitu'; }
+      else { from_id = newId; to_id = otherId; type = relType; }
+      try {
+        await api('POST', '/relationships', {from_id, to_id, type});
+        relMsg = '，关系已加上';
+      } catch(e) {
+        relMsg = '，但关系没加上：' + e.message;
+      }
+    }
+    let avatarMsg = '';
+    if (newAvatarDataUrl && newId) {
+      try {
+        await uploadAvatar(newId, newAvatarDataUrl);
+        avatarMsg = '，头像已上传';
+      } catch(e) {
+        avatarMsg = '，但头像没传上：' + e.message;
+      }
+    }
+    $('newName').value = '';
+    $('newRelPerson').value = '';
+    $('newAvatarPreview').innerHTML = '';
+    newAvatarDataUrl = '';
+    await loadData();
+    showOk('已新增「' + name + '」' + relMsg + avatarMsg);
+  } catch(e) { showToast(e.message); }
+});
+
+function fillRelSelects(){
+  const opts = people.map((p) =>
+    '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+  $('newRelPerson').innerHTML =
+    '<option value="">— 不关联 —</option>' + opts;
+}
+
+async function addRelForPerson(pid){
+  const otherId = parseInt($('editRelPerson').value, 10);
+  const sel = $('editRelType').value;
+  if (!otherId) { showToast('请先选一个人'); return; }
+  let from_id, to_id, type;
+  if (sel === 'shitu_master') { from_id = pid; to_id = otherId; type = 'shitu'; }
+  else if (sel === 'shitu_disciple') { from_id = otherId; to_id = pid; type = 'shitu'; }
+  else { from_id = pid; to_id = otherId; type = sel; }
+  try {
+    await api('POST', '/relationships', {from_id, to_id, type});
+    await loadData();
+    showOk('关系已加上');
+  } catch(e) { showToast(e.message); }
+}
+
+async function changeRelType(sel){
+  const rid = parseInt(sel.dataset.rel, 10);
+  const pid = parseInt(sel.dataset.pid, 10);
+  const v = sel.value;
+  const r = rels.find((x) => x.id === rid);
+  if (!r) return;
+  let from_id, to_id, type;
+  if (v === 'shitu_master') { from_id = pid; to_id = otherOf(r, pid); type = 'shitu'; }
+  else if (v === 'shitu_disciple') { from_id = otherOf(r, pid); to_id = pid; type = 'shitu'; }
+  else { from_id = r.from_id; to_id = r.to_id; type = v; }
+  try {
+    await api('PUT', '/relationships/' + rid, {from_id, to_id, type});
+    await loadData();
+    showOk('关系已改成' + TYPE_NAME[type]);
+  } catch(e) {
+    showToast(e.message);
+    renderPeople(); // 改失败，把下拉恢复成原来的值
+  }
+}
+
+$('search').addEventListener('input', renderPeople);
+
+async function tryEnter(){
+  const pwd = $('pwd').value;
+  if (!pwd) { $('gateErr').textContent = '请先输入密码。'; $('gateErr').classList.add('show'); return; }
+  token = pwd;
+  sessionStorage.setItem('yanyun_admin_token', token);
+  try {
+    await api('GET', '/auth-check');
+    $('gate').classList.add('hidden');
+    $('gateErr').classList.remove('show');
+    await loadData();
+  } catch(e) {
+    needPassword(true);
+  }
+}
+$('gateBtn').addEventListener('click', tryEnter);
+$('pwd').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryEnter(); });
+
+(async function init(){
+  if (!token) { needPassword(false); return; }
+  try {
+    await api('GET', '/auth-check');
+    $('gate').classList.add('hidden');
+    await loadData();
+  } catch(e) {
+    needPassword(true);
+  }
+})();
+</script>
+</body>
+</html>

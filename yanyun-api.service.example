@@ -1,0 +1,14 @@
+[Unit]
+Description=Yanyun relationship graph API
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/yanyun
+ExecStart=/usr/bin/python3 /opt/yanyun/api.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

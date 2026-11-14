@@ -1,0 +1,5 @@
+[client]
+host=127.0.0.1
+user=yanyun
+password=你的数据库密码
+database=yanyun
